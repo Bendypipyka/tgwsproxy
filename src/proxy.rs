@@ -589,7 +589,7 @@ pub async fn tcp_fallback(
 // ---------------------------------------------------------------------------
 
 async fn try_cfproxy_base_domain(dc: i32, base_domain: &str) -> (Option<RawWebSocket>, String) {
-    let base_domain = normalize_cf_domain(base_domain);
+    let base_domain = clean_domain_for_use(base_domain);
     if base_domain.is_empty() {
         return (None, String::new());
     }
@@ -607,10 +607,23 @@ async fn try_cfproxy_base_domain(dc: i32, base_domain: &str) -> (Option<RawWebSo
         None => return (None, String::new()),
     };
 
-    let domain = format!("kws{}.{}", dc, base_domain);
-    ldebug!(" CF try {}", domain);
+    // Cloudflare Worker (*.workers.dev): домен один и тот же для всех DC,
+    // нужный датацентр передаётся через query-параметр ?dst=<ip>,
+    // а не префиксом kwsN. — у workers.dev нет своих поддоменов.
+    let is_worker = base_domain.ends_with(".workers.dev");
+    let (domain, path): (String, String) = if is_worker {
+        let ip = match DC_DEFAULT_IPS.get(&dc) {
+            Some(ip) => ip.to_string(),
+            None => return (None, String::new()),
+        };
+        (base_domain.clone(), format!("/apiws?dst={}", ip))
+    } else {
+        (format!("kws{}.{}", dc, base_domain), "/apiws".to_string())
+    };
 
-    let (ws, resolved_ip, err) = cf_connect_domain(&domain, "/apiws", 5.0).await;
+    ldebug!(" CF try {} (path {})", domain, path);
+
+    let (ws, resolved_ip, err) = cf_connect_domain(&domain, &path, 5.0).await;
     if let Some(e) = err {
         // ВАЖНО (как в Go): cooldown ставим ТОЛЬКО при HTTP 429, иначе
         // любой reset/timeout выжигал бы домены и плодил лавину cooldown.
