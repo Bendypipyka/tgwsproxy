@@ -19,18 +19,8 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Set up Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
-
-    - name: Set ANDROID_NDK_HOME
-      run: |
-        NDK_VERSION=$(ls "$ANDROID_HOME/ndk" | sort -V | tail -n 1)
-        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> $GITHUB_ENV
-
-    - name: Install cargo-ndk
-      run: cargo install cargo-ndk
+    - name: Remove placeholder local.properties
+      run: rm -f local.properties
 
     - name: Make gradlew executable
       run: chmod +x gradlew
@@ -42,4 +32,3 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: my-app-apk
-        path: app/build/outputs/apk/debug/*.apk
