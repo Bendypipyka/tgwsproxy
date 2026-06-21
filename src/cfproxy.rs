@@ -53,6 +53,17 @@ pub fn normalize_cf_domain(s: &str) -> String {
     decoded
 }
 
+/// Лёгкая очистка домена без требования конкретной зоны (.co.uk).
+/// Используется для произвольных пользовательских доменов (в т.ч. *.workers.dev),
+/// которые не должны проходить через декодер встроенного списка.
+pub fn clean_domain_for_use(s: &str) -> String {
+    let mut d = s.trim().to_lowercase();
+    while d.ends_with('.') {
+        d.pop();
+    }
+    d
+}
+
 pub fn default_cfproxy_domains() -> Vec<String> {
     let mut domains = Vec::with_capacity(CFPROXY_ENC.len());
     for enc in CFPROXY_ENC {
