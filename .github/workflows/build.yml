@@ -25,7 +25,9 @@ jobs:
         targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
 
     - name: Set ANDROID_NDK_HOME
-      run: echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$(ls $ANDROID_HOME/ndk)" >> $GITHUB_ENV
+      run: |
+        NDK_VERSION=$(ls "$ANDROID_HOME/ndk" | sort -V | tail -n 1)
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> $GITHUB_ENV
 
     - name: Install cargo-ndk
       run: cargo install cargo-ndk
