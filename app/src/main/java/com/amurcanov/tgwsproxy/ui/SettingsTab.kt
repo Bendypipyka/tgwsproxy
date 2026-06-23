@@ -1,11 +1,8 @@
-package com.amurcanov.tgwsproxy.ui
+[23.06.2026 23:02] ㅤ: package com.amurcanov.tgwsproxy.ui
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.content.ActivityNotFoundException
 import android.net.Uri
-import android.os.PowerManager
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -15,12 +12,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,7 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,12 +48,8 @@ fun openTelegram(context: Context, url: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(
-            context,
-            com.amurcanov.tgwsproxy.R.string.telegram_not_found,
-            Toast.LENGTH_SHORT
-        ).show()
+    } catch (_: Exception) {
+        Toast.makeText(context, "Telegram не найден", Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -67,7 +59,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val isRunning by ProxyService.isRunning.collectAsStateWithLifecycle()
-
     val isReady by settingsStore.isReady.collectAsStateWithLifecycle(initialValue = false)
     val isExperimental by settingsStore.isExperimentalMode.collectAsStateWithLifecycle(initialValue = false)
 
@@ -84,7 +75,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val savedDc4m by settingsStore.dc4m.collectAsStateWithLifecycle(initialValue = "")
     val savedDc5m by settingsStore.dc5m.collectAsStateWithLifecycle(initialValue = "")
     val savedDc203m by settingsStore.dc203m.collectAsStateWithLifecycle(initialValue = "")
-    val savedPort by settingsStore.port.collectAsStateWithLifecycle(initialValue = "1443")
+[23.06.2026 23:02] ㅤ: val savedPort by settingsStore.port.collectAsStateWithLifecycle(initialValue = "1443")
     val savedBindIp by settingsStore.bindIp.collectAsStateWithLifecycle(initialValue = "127.0.0.1")
     val savedPoolSize by settingsStore.poolSize.collectAsStateWithLifecycle(initialValue = 4)
     val savedCfEnabled by settingsStore.cfproxyEnabled.collectAsStateWithLifecycle(initialValue = true)
@@ -95,11 +86,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
 
     if (!isReady) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp
-            )
+            CircularProgressIndicator()
         }
         return
     }
@@ -118,7 +105,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
     var dc4mText by rememberSaveable(savedDc4m) { mutableStateOf(savedDc4m) }
     var dc5mText by rememberSaveable(savedDc5m) { mutableStateOf(savedDc5m) }
     var dc203mText by rememberSaveable(savedDc203m) { mutableStateOf(savedDc203m) }
-
     var portText by rememberSaveable(savedPort) { mutableStateOf(savedPort) }
     var bindIpText by rememberSaveable(savedBindIp) { mutableStateOf(savedBindIp) }
     var selectedPoolSize by rememberSaveable(savedPoolSize) { mutableIntStateOf(savedPoolSize) }
@@ -143,8 +129,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
         saveJob?.cancel()
         saveJob = scope.launch {
             delay(300)
-            settingsStore.saveAll(
-                isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
+            settingsStore.saveAll(isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
                 dc1mText, dc2mText, dc3mText, dc4mText, dc5mText, dc203mText,
                 experimentalMode, bindIpText, portText, selectedPoolSize,
                 cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText
@@ -156,7 +141,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val scrollState = rememberScrollState()
 
     if (showIpSetupDialog) {
-        IpSetupDialog(
+[23.06.2026 23:02] ㅤ: IpSetupDialog(
             isExperimental = experimentalMode,
             onExperimentalChange = { experimentalMode = it; scheduleSave() },
             dc1Text = dc1Text, onDc1Change = { dc1Text = it; scheduleSave() },
@@ -181,334 +166,49 @@ fun SettingsTab(settingsStore: SettingsStore) {
             .verticalScroll(scrollState)
             .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(com.amurcanov.tgwsproxy.R.string.settings),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+        // --- Блок настроек ---
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // IP и Порт
+            Text("IP и Порт", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            
+            // ... (здесь остальной ваш существующий код для полей IP и Порта) ...
+            // Убедитесь, что вы не удалили этот кусок при замене файла!
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+
+        // CloudFlare
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("CloudFlare CDN", style = MaterialTheme.typography.titleSmall)
+            Switch(checked = cfEnabled, onCheckedChange = { cfEnabled = it; scheduleSave() }, enabled = !isRunning)
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+
+        // Custom Domain
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Свой домен (Worker)", style = MaterialTheme.typography.titleSmall)
+                Switch(checked = customCfDomainEnabled, onCheckedChange = { customCfDomainEnabled = it; scheduleSave() }, enabled = !isRunning)
+            }
+            OutlinedTextField(
+                value = customCfDomain,
+                onValueChange = { customCfDomain = it.trim(); scheduleSave() },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("my-worker.workers.dev") }
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        AppSectionCard {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.Public, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                    Text(
-                        stringResource(com.amurcanov.tgwsproxy.R.string.connection),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Text(
-                    "IP и Порт",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
-                )
-                Surface(
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
-                    color = androidx.compose.ui.graphics.Color.Transparent
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        androidx.compose.foundation.text.BasicTextField(
-                            value = bindIpText,
-                            onValueChange = { newValue ->
-                                bindIpText = newValue.filter { it.isDigit() || it == '.' }
-                                scheduleSave()
-                            },
-                            modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            ),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
-                        )
-                        
-                        VerticalDivider(
-                            modifier = Modifier.fillMaxHeight().padding(vertical = 8.dp),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-                        
-                        androidx.compose.foundation.text.BasicTextField(
-                            value = portText,
-                            onValueChange = { 
-                                val filtered = it.filter { char -> char.isDigit() }
-                                if (filtered.length <= 5) { 
-                                    portText = filtered
-                                    scheduleSave() 
-                                } 
-                            },
-                            modifier = Modifier.width(64.dp).padding(horizontal = 8.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            ),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                    }
-                }
-                OutlinedButton(
-                    onClick = { showIpSetupDialog = true },
-                    enabled = !cfEnabled && !isRunning,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = if (cfEnabled || isRunning) 0.2f else 0.5f))
-                ) {
-                    Icon(Icons.Default.Settings, null, Modifier.size(20.dp))
-                    if (cfEnabled) {
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(com.amurcanov.tgwsproxy.R.string.auto_cf_enabled), fontWeight = FontWeight.SemiBold)
-                    } else {
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(com.amurcanov.tgwsproxy.R.string.configure_dc_addresses), fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.Layers, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                    Text(
-                        stringResource(com.amurcanov.tgwsproxy.R.string.ws_pool),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val poolOptions = listOf(2, 4, 6)
-                    poolOptions.forEach { size ->
-                        PoolChip(
-                            label = "$size",
-                            selected = selectedPoolSize == size,
-                            enabled = !isRunning,
-                            modifier = Modifier.weight(1f).height(48.dp)
-                        ) {
-                            selectedPoolSize = size
-                            scheduleSave()
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.VpnKey, null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        stringResource(com.amurcanov.tgwsproxy.R.string.secret_key),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                OutlinedTextField(
-                    value = secretKeyText,
-                    onValueChange = {},
-                    readOnly = true,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    trailingIcon = {
-                        IconButton(
-                            onClick = {
-                                val newKey = generateRandomSecret()
-                                secretKeyText = newKey
-                                scope.launch { settingsStore.saveSecretKey(newKey) }
-                                scheduleSave()
-                            },
-                            enabled = !isRunning
-                        ) {
-                            Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.primary)
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
-                )
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Cloud, null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        "CloudFlare CDN",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Switch(
-                    checked = cfEnabled,
-                    onCheckedChange = {
-                        cfEnabled = it
-                        scheduleSave()
-                    },
-                    enabled = !isRunning
-                )
-            }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Public, null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                "Свой домен (Worker)",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                        Switch(
-                            checked = customCfDomainEnabled,
-                            onCheckedChange = {
-                                customCfDomainEnabled = it
-                                scheduleSave()
-                            },
-                            enabled = !isRunning
-                        )
-                    }
-
-                        OutlinedTextField(
-                            value = customCfDomain,
-                            onValueChange = { newValue ->
-                                customCfDomain = newValue.trim()
-                                scheduleSave()
-                            },
-                            readOnly = isRunning,
-                            singleLine = true,
-                            placeholder = { Text("например: my-worker.workers.dev") },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                            )
-                        )
-                        Text(
-                            "Только домен, без https:// и без / в конце",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.PowerSettingsNew, null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        stringResource(com.amurcanov.tgwsproxy.R.string.autostart),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Switch(
-                    checked = autoStartOnBoot,
-                    onCheckedChange = { enabled ->
-                        scope.launch { settingsStore.saveAutoStartOnBoot(enabled) }
-                    }
-                )
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
+        // ... (остальной код файла: автостарт, кнопка выхода и т.д.) ...
     }
 }
 
 @Composable
-private fun PoolChip(
+private fun IpSetupDialog(...) {
+    // ... (код диалога без изменений) ...
+}
     label: String,
     selected: Boolean,
     enabled: Boolean = true,
