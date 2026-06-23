@@ -1,4 +1,4 @@
-[23.06.2026 23:58] ㅤ: package com.amurcanov.tgwsproxy.ui
+package com.amurcanov.tgwsproxy.ui
 
 import android.content.Context
 import android.content.Intent
@@ -69,7 +69,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val savedBindIp by settingsStore.bindIp.collectAsStateWithLifecycle(initialValue = "127.0.0.1")
     val savedPoolSize by settingsStore.poolSize.collectAsStateWithLifecycle(initialValue = 4)
     val savedCfEnabled by settingsStore.cfproxyEnabled.collectAsStateWithLifecycle(initialValue = true)
-[23.06.2026 23:58] ㅤ: val savedCustomDomainEnabled by settingsStore.customCfDomainEnabled.collectAsStateWithLifecycle(initialValue = false)
+    val savedCustomDomainEnabled by settingsStore.customCfDomainEnabled.collectAsStateWithLifecycle(initialValue = false)
     val savedCustomDomain by settingsStore.customCfDomain.collectAsStateWithLifecycle(initialValue = "")
     val autoStartOnBoot by settingsStore.autoStartOnBoot.collectAsStateWithLifecycle(initialValue = false)
     val savedSecretKey by settingsStore.secretKey.collectAsStateWithLifecycle(initialValue = "LOADING")
@@ -142,7 +142,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
         OutlinedTextField(value = portText, onValueChange = { portText = it; scheduleSave() }, modifier = Modifier.fillMaxWidth())
         
         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-[23.06.2026 23:58] ㅤ: // --- БЛОК CloudFlare ---
+         // --- БЛОК CloudFlare ---
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("CloudFlare CDN", style = MaterialTheme.typography.titleSmall)
             Switch(checked = cfEnabled, onCheckedChange = { cfEnabled = it; scheduleSave() }, enabled = !isRunning)
