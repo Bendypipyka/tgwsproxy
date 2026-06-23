@@ -172,18 +172,18 @@ fun SettingsScreenTemplate() {
 
                     // CloudFlare CDN — при включении снимает Worker и наоборот
  SettingSwitchRow(
-     icon = Icons.Default.Cloud,
-     title = "CloudFlare CDN",
-     isChecked = isCfCdnEnabled,
-     onCheckedChange = { isCfCdnEnabled = it }
+    icon = Icons.Default.Cloud,
+    title = "CloudFlare CDN",
+    isChecked = routingMode == RoutingMode.CLOUDFLARE_CDN,
+    onCheckedChange = { if (it) routingMode = RoutingMode.CLOUDFLARE_CDN else routingMode = RoutingMode.NONE }
 )
 
 SettingSwitchRow(
     icon = Icons.Default.Language,
     title = "Свой домен (Worker)",
-    isChecked = isWorkerEnabled,
-    onCheckedChange = { isWorkerEnabled = it }
-)
+    isChecked = routingMode == RoutingMode.WORKER,
+    onCheckedChange = { if (it) routingMode = RoutingMode.WORKER else routingMode = RoutingMode.NONE }
+))
 
                     // Поле домена появляется только при активном Worker
                     AnimatedVisibility(
@@ -228,10 +228,10 @@ fun SectionHeader(icon: ImageVector, title: String) {
 
 @Composable
 fun SettingSwitchRow(
-    icon = Icons.Default.Language,
-    title = "Свой домен (Worker)",
-    isChecked = routingMode == RoutingMode.WORKER,
-    onCheckedChange = { if (it) routingMode = RoutingMode.WORKER else routingMode = RoutingMode.NONE }
+    icon: ImageVector,
+    title: String,
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
