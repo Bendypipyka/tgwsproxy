@@ -1,3 +1,6 @@
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,31 +18,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Кастомные цвета из твоего макета
-val BgColor = Color(0xFFF4F0FB) // Светло-фиолетовый фон
-val CardColor = Color(0xFFFFFFFF) // Белая карточка
-val AccentPurple = Color(0xFF5C5488) // Темно-фиолетовый акцент (для активных кнопок)
-val LightPurple = Color(0xFFE4DDF3) // Светло-фиолетовый (для неактивных кнопок)
+// Цвета
+val BgColor = Color(0xFFF4F0FB)
+val CardColor = Color(0xFFFFFFFF)
+val AccentPurple = Color(0xFF5C5488)
+val LightPurple = Color(0xFFE4DDF3)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreenTemplate() {
-    // Временные стейты для демонстрации (потом заменишь на свои из SettingsStore)
     var port by remember { mutableStateOf("1443") }
     var wsPool by remember { mutableStateOf(6) }
     var secretKey by remember { mutableStateOf("6b14cb003a34964c80c1af1f1157616") }
-    var isCfEnabled by remember { mutableStateOf(true) }
+    
+    // Новые стейты для взаимоисключающей логики
+    var isCfCdnEnabled by remember { mutableStateOf(true) }
+    var isWorkerEnabled by remember { mutableStateOf(false) }
+    var workerDomain by remember { mutableStateOf("tg-ws-proxy-bhz.pages.dev") }
+    
     var isAutoStart by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor) // Устанавливаем цвет фона приложения
+            .background(BgColor)
             .padding(horizontal = 16.dp)
-            .padding(top = 48.dp, bottom = 80.dp) // Отступы для статус-бара и нижнего меню
+            .padding(top = 48.dp, bottom = 80.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // Заголовок экрана
         Text(
             text = "Настройки",
             fontSize = 28.sp,
@@ -48,9 +54,8 @@ fun SettingsScreenTemplate() {
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Главная белая карточка с настройками
         Card(
-            shape = RoundedCornerShape(24.dp), // Сильное скругление как на макете
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = CardColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             modifier = Modifier.fillMaxWidth()
@@ -89,7 +94,7 @@ fun SettingsScreenTemplate() {
                     }
                 }
 
-                Divider(color = BgColor, thickness = 2.dp)
+                HorizontalDivider(color = BgColor, thickness = 2.dp)
 
                 // --- СЕКЦИЯ: Пул WS ---
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -117,7 +122,7 @@ fun SettingsScreenTemplate() {
                     }
                 }
 
-                Divider(color = BgColor, thickness = 2.dp)
+                HorizontalDivider(color = BgColor, thickness = 2.dp)
 
                 // --- СЕКЦИЯ: Секретный ключ ---
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -137,16 +142,48 @@ fun SettingsScreenTemplate() {
                     )
                 }
 
-                Divider(color = BgColor, thickness = 2.dp)
+                HorizontalDivider(color = BgColor, thickness = 2.dp)
 
-                // --- СЕКЦИЯ: Переключатели ---
+                // --- СЕКЦИЯ: Маршрутизация и Переключатели ---
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    
+                    // CloudFlare CDN Переключатель
                     SettingSwitchRow(
                         icon = Icons.Default.Cloud,
                         title = "CloudFlare CDN",
-                        isChecked = isCfEnabled,
-                        onCheckedChange = { isCfEnabled = it }
+                        isChecked = isCfCdnEnabled,
+                        onCheckedChange = { 
+                            isCfCdnEnabled = it
+                            if (it) isWorkerEnabled = false // Выключаем Worker, если включили CDN
+                        }
                     )
+                    
+                    // Свой домен (Worker) Переключатель
+                    SettingSwitchRow(
+                        icon = Icons.Default.Language,
+                        title = "Свой домен (Worker)",
+                        isChecked = isWorkerEnabled,
+                        onCheckedChange = { 
+                            isWorkerEnabled = it
+                            if (it) isCfCdnEnabled = false // Выключаем CDN, если включили Worker
+                        }
+                    )
+
+                    // Плавно появляющееся поле для домена
+                    AnimatedVisibility(
+                        visible = isWorkerEnabled,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        OutlinedTextField(
+                            value = workerDomain,
+                            onValueChange = { workerDomain = it },
+                            label = { Text("Домен Worker'a") },
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true
+                        )
+                    }
                     
                     SettingSwitchRow(
                         icon = Icons.Default.PowerSettingsNew,
@@ -160,7 +197,6 @@ fun SettingsScreenTemplate() {
     }
 }
 
-// Вспомогательный компонент для заголовков секций
 @Composable
 fun SectionHeader(icon: ImageVector, title: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -170,7 +206,6 @@ fun SectionHeader(icon: ImageVector, title: String) {
     }
 }
 
-// Вспомогательный компонент для строк с переключателями (свитчами)
 @Composable
 fun SettingSwitchRow(icon: ImageVector, title: String, isChecked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
@@ -195,3 +230,4 @@ fun SettingSwitchRow(icon: ImageVector, title: String, isChecked: Boolean, onChe
         )
     }
 }
+
