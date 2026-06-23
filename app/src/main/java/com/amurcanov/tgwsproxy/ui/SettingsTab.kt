@@ -173,6 +173,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
 
 // --- Блок CloudFlare и Custom Domain ---
 
+// --- ЗАМЕНИ ЭТИМ БЛОКОМ ---
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
         Row(
@@ -183,9 +184,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             Text("CloudFlare CDN", style = MaterialTheme.typography.titleSmall)
             Switch(
                 checked = cfEnabled,
-                onCheckedChange = { 
+                onCheckedChange = {
                     cfEnabled = it
-                    scheduleSave() 
+                    scheduleSave()
                 },
                 enabled = !isRunning
             )
@@ -205,9 +206,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
                 Text("Свой домен (Worker)", style = MaterialTheme.typography.titleSmall)
                 Switch(
                     checked = customCfDomainEnabled,
-                    onCheckedChange = { 
+                    onCheckedChange = {
                         customCfDomainEnabled = it
-                        scheduleSave() 
+                        scheduleSave()
                     },
                     enabled = !isRunning
                 )
@@ -215,9 +216,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             
             OutlinedTextField(
                 value = customCfDomain,
-                onValueChange = { 
+                onValueChange = {
                     customCfDomain = it.trim()
-                    scheduleSave() 
+                    scheduleSave()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("my-worker.workers.dev") }
@@ -225,5 +226,4 @@ fun SettingsTab(settingsStore: SettingsStore) {
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-        
-        // --- Конец блока ---
+        // --- КОНЕЦ БЛОКА ---
