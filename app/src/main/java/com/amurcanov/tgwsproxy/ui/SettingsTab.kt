@@ -1,3 +1,6 @@
+ // build.gradle зависимость:
+// implementation("androidx.compose.material:material-icons-extended")
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -24,18 +27,17 @@ val CardColor = Color(0xFFFFFFFF)
 val AccentPurple = Color(0xFF5C5488)
 val LightPurple = Color(0xFFE4DDF3)
 
+// Режим маршрутизации — вместо двух булевых флагов
+enum class RoutingMode { CLOUDFLARE_CDN, WORKER, NONE }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreenTemplate() {
     var port by remember { mutableStateOf("1443") }
     var wsPool by remember { mutableStateOf(6) }
     var secretKey by remember { mutableStateOf("6b14cb003a34964c80c1af1f1157616") }
-    
-    // Новые стейты для взаимоисключающей логики
-    var isCfCdnEnabled by remember { mutableStateOf(true) }
-    var isWorkerEnabled by remember { mutableStateOf(false) }
+    var routingMode by remember { mutableStateOf(RoutingMode.CLOUDFLARE_CDN) }
     var workerDomain by remember { mutableStateOf("tg-ws-proxy-bhz.pages.dev") }
-    
     var isAutoStart by remember { mutableStateOf(false) }
 
     Column(
@@ -64,11 +66,11 @@ fun SettingsScreenTemplate() {
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                
+
                 // --- СЕКЦИЯ: Подключение ---
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SectionHeader(icon = Icons.Default.Public, title = "Подключение")
-                    
+
                     OutlinedTextField(
                         value = port,
                         onValueChange = { port = it },
@@ -78,9 +80,18 @@ fun SettingsScreenTemplate() {
                         singleLine = true
                     )
 
+                    // Кнопка динамически отражает текущий режим
+                    val autoButtonLabel = when (routingMode) {
+                        RoutingMode.CLOUDFLARE_CDN -> "Авто (CF CDN включён)"
+                        RoutingMode.WORKER -> "Авто (Worker включён)"
+                        RoutingMode.NONE -> "Авто (без маршрутизации)"
+                    }
+
                     Button(
                         onClick = { /* Автонастройка */ },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = LightPurple,
@@ -88,9 +99,13 @@ fun SettingsScreenTemplate() {
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Авто (Включён CF)", fontWeight = FontWeight.SemiBold)
+                        Text(autoButtonLabel, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -99,7 +114,7 @@ fun SettingsScreenTemplate() {
                 // --- СЕКЦИЯ: Пул WS ---
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SectionHeader(icon = Icons.Default.Layers, title = "Пул WS")
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -108,7 +123,9 @@ fun SettingsScreenTemplate() {
                             val isSelected = wsPool == poolValue
                             Button(
                                 onClick = { wsPool = poolValue },
-                                modifier = Modifier.weight(1f).height(48.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (isSelected) AccentPurple else LightPurple,
@@ -127,16 +144,21 @@ fun SettingsScreenTemplate() {
                 // --- СЕКЦИЯ: Секретный ключ ---
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SectionHeader(icon = Icons.Default.VpnKey, title = "Секретный ключ")
-                    
+
                     OutlinedTextField(
                         value = secretKey,
                         onValueChange = { secretKey = it },
+                        label = { Text("Секретный ключ") }, // Fix: label добавлен
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                         trailingIcon = {
                             IconButton(onClick = { /* Сгенерировать новый ключ */ }) {
-                                Icon(Icons.Default.Refresh, contentDescription = "Обновить", tint = AccentPurple)
+                                Icon(
+                                    Icons.Default.Refresh,
+                                    contentDescription = "Обновить",
+                                    tint = AccentPurple
+                                )
                             }
                         }
                     )
@@ -146,45 +168,48 @@ fun SettingsScreenTemplate() {
 
                 // --- СЕКЦИЯ: Маршрутизация и Переключатели ---
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    
-                    // CloudFlare CDN Переключатель
+                    SectionHeader(icon = Icons.Default.Route, title = "Маршрутизация")
+
+                    // CloudFlare CDN — при включении снимает Worker и наоборот
                     SettingSwitchRow(
                         icon = Icons.Default.Cloud,
                         title = "CloudFlare CDN",
-                        isChecked = isCfCdnEnabled,
-                        onCheckedChange = { 
-                            isCfCdnEnabled = it
-                            if (it) isWorkerEnabled = false // Выключаем Worker, если включили CDN
-                        }
-                    )
-                    
-                    // Свой домен (Worker) Переключатель
-                    SettingSwitchRow(
-                        icon = Icons.Default.Language,
-                        title = "Свой домен (Worker)",
-                        isChecked = isWorkerEnabled,
-                        onCheckedChange = { 
-                            isWorkerEnabled = it
-                            if (it) isCfCdnEnabled = false // Выключаем CDN, если включили Worker
+                        isChecked = routingMode == RoutingMode.CLOUDFLARE_CDN,
+                        onCheckedChange = { enabled ->
+                            routingMode = if (enabled) RoutingMode.CLOUDFLARE_CDN else RoutingMode.NONE
                         }
                     )
 
-                    // Плавно появляющееся поле для домена
+                    // Свой домен (Worker)
+                    SettingSwitchRow(
+                        icon = Icons.Default.Language,
+                        title = "Свой домен (Worker)",
+                        isChecked = routingMode == RoutingMode.WORKER,
+                        onCheckedChange = { enabled ->
+                            routingMode = if (enabled) RoutingMode.WORKER else RoutingMode.NONE
+                        }
+                    )
+
+                    // Поле домена появляется только при активном Worker
                     AnimatedVisibility(
-                        visible = isWorkerEnabled,
+                        visible = routingMode == RoutingMode.WORKER,
                         enter = expandVertically(),
                         exit = shrinkVertically()
                     ) {
                         OutlinedTextField(
                             value = workerDomain,
                             onValueChange = { workerDomain = it },
-                            label = { Text("Домен Worker'a") },
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            label = { Text("Домен Worker'а") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
                             shape = RoundedCornerShape(16.dp),
                             singleLine = true
                         )
                     }
-                    
+
+                    HorizontalDivider(color = BgColor, thickness = 2.dp)
+
                     SettingSwitchRow(
                         icon = Icons.Default.PowerSettingsNew,
                         title = "Автозапуск",
@@ -207,7 +232,12 @@ fun SectionHeader(icon: ImageVector, title: String) {
 }
 
 @Composable
-fun SettingSwitchRow(icon: ImageVector, title: String, isChecked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+fun SettingSwitchRow(
+    icon: ImageVector,
+    title: String,
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -230,4 +260,3 @@ fun SettingSwitchRow(icon: ImageVector, title: String, isChecked: Boolean, onChe
         )
     }
 }
-
