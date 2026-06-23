@@ -1,12 +1,7 @@
-package com.amurcanov.tgwsproxy.ui
-
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,152 +9,189 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.amurcanov.tgwsproxy.ProxyService
-import com.amurcanov.tgwsproxy.SettingsStore
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.sp
 
-// --- Вспомогательные утилиты ---
-
-private fun generateRandomSecret(): String {
-    val bytes = ByteArray(16)
-    java.security.SecureRandom().nextBytes(bytes)
-    return bytes.joinToString("") { "%02x".format(it) }
-}
-
-fun openTelegram(context: Context, url: String) {
-    try {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    } catch (_: Exception) {
-        Toast.makeText(context, "Telegram не найден", Toast.LENGTH_SHORT).show()
-    }
-}
-
-// Модель для дата-центров, чтобы не плодить переменные
-data class DcConfig(
-    val key: String,
-    val label: String,
-    val value: String,
-    val onValueChange: (String) -> Unit
-)
+// Кастомные цвета из твоего макета
+val BgColor = Color(0xFFF4F0FB) // Светло-фиолетовый фон
+val CardColor = Color(0xFFFFFFFF) // Белая карточка
+val AccentPurple = Color(0xFF5C5488) // Темно-фиолетовый акцент (для активных кнопок)
+val LightPurple = Color(0xFFE4DDF3) // Светло-фиолетовый (для неактивных кнопок)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsTab(settingsStore: SettingsStore) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    
-    // Системные состояния
-    val isRunning by ProxyService.isRunning.collectAsStateWithLifecycle()
-    val isReady by settingsStore.isReady.collectAsStateWithLifecycle(initialValue = false)
-    val isExperimental by settingsStore.isExperimentalMode.collectAsStateWithLifecycle(initialValue = false)
-    val isDcAuto by settingsStore.isDcAuto.collectAsStateWithLifecycle(initialValue = true)
+fun SettingsScreenTemplate() {
+    // Временные стейты для демонстрации (потом заменишь на свои из SettingsStore)
+    var port by remember { mutableStateOf("1443") }
+    var wsPool by remember { mutableStateOf(6) }
+    var secretKey by remember { mutableStateOf("6b14cb003a34964c80c1af1f1157616") }
+    var isCfEnabled by remember { mutableStateOf(true) }
+    var isAutoStart by remember { mutableStateOf(false) }
 
-    // Избавляемся от ада с 12+ подписками: собираем все DC в один реактивный объект
-    val dcState by remember(settingsStore) {
-        combine(
-            settingsStore.dc1, settingsStore.dc2, settingsStore.dc3, 
-            settingsStore.dc4, settingsStore.dc5, settingsStore.dc203,
-            settingsStore.dc1m, settingsStore.dc2m, settingsStore.dc3m, 
-            settingsStore.dc4m, settingsStore.dc5m, settingsStore.dc203m
-        ) { array ->
-            mapOf(
-                "dc1" to array[0], "dc2" to (array[1].ifEmpty { SettingsStore.DEFAULT_DIRECT_DC2_IP }), 
-                "dc3" to array[2], "dc4" to (array[3].ifEmpty { SettingsStore.DEFAULT_DIRECT_DC4_IP }), 
-                "dc5" to array[4], "dc203" to array[5],
-                "dc1m" to array[6], "dc2m" to array[7], "dc3m" to array[8], 
-                "dc4m" to array[9], "dc5m" to array[10], "dc203m" to array[11]
-            )
-        }
-    }.collectAsStateWithLifecycle(initialValue = emptyMap())
-
-    // Список конфигураций для отрисовки в цикле
-    val dcList = remember(dcState) {
-        listOf(
-            DcConfig("dc1", "DC 1 IP", dcState["dc1"].orEmpty()) { scope.launch { settingsStore.setDc1(it) } },
-            DcConfig("dc2", "DC 2 IP", dcState["dc2"].orEmpty()) { scope.launch { settingsStore.setDc2(it) } },
-            DcConfig("dc3", "DC 3 IP", dcState["dc3"].orEmpty()) { scope.launch { settingsStore.setDc3(it) } },
-            DcConfig("dc4", "DC 4 IP", dcState["dc4"].orEmpty()) { scope.launch { settingsStore.setDc4(it) } },
-            DcConfig("dc5", "DC 5 IP", dcState["dc5"].orEmpty()) { scope.launch { settingsStore.setDc5(it) } },
-            DcConfig("dc203", "DC 203 IP", dcState["dc203"].orEmpty()) { scope.launch { settingsStore.setDc203(it) } },
-            // Мастер-ноды (m)
-            DcConfig("dc1m", "DC 1 Master IP", dcState["dc1m"].orEmpty()) { scope.launch { settingsStore.setDc1m(it) } },
-            DcConfig("dc2m", "DC 2 Master IP", dcState["dc2m"].orEmpty()) { scope.launch { settingsStore.setDc2m(it) } },
-            DcConfig("dc3m", "DC 3 Master IP", dcState["dc3m"].orEmpty()) { scope.launch { settingsStore.setDc3m(it) } },
-            DcConfig("dc4m", "DC 4 Master IP", dcState["dc4m"].orEmpty()) { scope.launch { settingsStore.setDc4m(it) } },
-            DcConfig("dc5m", "DC 5 Master IP", dcState["dc5m"].orEmpty()) { scope.launch { settingsStore.setDc5m(it) } },
-            DcConfig("dc203m", "DC 203 Master IP", dcState["dc203m"].orEmpty()) { scope.launch { settingsStore.setDc203m(it) } },
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BgColor) // Устанавливаем цвет фона приложения
+            .padding(horizontal = 16.dp)
+            .padding(top = 48.dp, bottom = 80.dp) // Отступы для статус-бара и нижнего меню
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Заголовок экрана
+        Text(
+            text = "Настройки",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 24.dp)
         )
-    }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Настройки Proxy", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = { /* Действие рефреша если нужно */ }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Обновить")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        // Главная белая карточка с настройками
+        Card(
+            shape = RoundedCornerShape(24.dp), // Сильное скругление как на макете
+            colors = CardDefaults.cardColors(containerColor = CardColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Переключатель автоматического режима
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Автонастройка DC", style = MaterialTheme.typography.titleMedium)
-                        Text("Использовать встроенные IP адреса", style = MaterialTheme.typography.bodySmall)
-                    }
-                    Switch(
-                        checked = isDcAuto,
-                        onCheckedChange = { scope.launch { settingsStore.setIsDcAuto(it) } }
-                    )
-                }
-            }
-
-            // Кастомные настройки IP (показываем, только если автовыбор выключен)
-            if (!isDcAuto) {
-                Text(
-                    text = "Конфигурация Data Centers",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
                 
-                // Рендерим ВСЕ текстовые поля одной строчкой кода вместо гигантской простыни
-                dcList.forEach { dc ->
+                // --- СЕКЦИЯ: Подключение ---
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(icon = Icons.Default.Public, title = "Подключение")
+                    
                     OutlinedTextField(
-                        value = dc.value,
-                        onValueChange = dc.onValueChange,
-                        label = { Text(dc.label) },
+                        value = port,
+                        onValueChange = { port = it },
+                        label = { Text("Порт") },
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
+
+                    Button(
+                        onClick = { /* Автонастройка */ },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = LightPurple,
+                            contentColor = AccentPurple
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Авто (Включён CF)", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                Divider(color = BgColor, thickness = 2.dp)
+
+                // --- СЕКЦИЯ: Пул WS ---
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(icon = Icons.Default.Layers, title = "Пул WS")
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        listOf(2, 4, 6).forEach { poolValue ->
+                            val isSelected = wsPool == poolValue
+                            Button(
+                                onClick = { wsPool = poolValue },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) AccentPurple else LightPurple,
+                                    contentColor = if (isSelected) Color.White else AccentPurple
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(0.dp)
+                            ) {
+                                Text(poolValue.toString(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
+                        }
+                    }
+                }
+
+                Divider(color = BgColor, thickness = 2.dp)
+
+                // --- СЕКЦИЯ: Секретный ключ ---
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(icon = Icons.Default.VpnKey, title = "Секретный ключ")
+                    
+                    OutlinedTextField(
+                        value = secretKey,
+                        onValueChange = { secretKey = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { /* Сгенерировать новый ключ */ }) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Обновить", tint = AccentPurple)
+                            }
+                        }
+                    )
+                }
+
+                Divider(color = BgColor, thickness = 2.dp)
+
+                // --- СЕКЦИЯ: Переключатели ---
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SettingSwitchRow(
+                        icon = Icons.Default.Cloud,
+                        title = "CloudFlare CDN",
+                        isChecked = isCfEnabled,
+                        onCheckedChange = { isCfEnabled = it }
+                    )
+                    
+                    SettingSwitchRow(
+                        icon = Icons.Default.PowerSettingsNew,
+                        title = "Автозапуск",
+                        isChecked = isAutoStart,
+                        onCheckedChange = { isAutoStart = it }
+                    )
                 }
             }
         }
+    }
+}
+
+// Вспомогательный компонент для заголовков секций
+@Composable
+fun SectionHeader(icon: ImageVector, title: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = AccentPurple, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(title, fontWeight = FontWeight.Bold, color = AccentPurple, fontSize = 16.sp)
+    }
+}
+
+// Вспомогательный компонент для строк с переключателями (свитчами)
+@Composable
+fun SettingSwitchRow(icon: ImageVector, title: String, isChecked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = AccentPurple, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(title, fontWeight = FontWeight.Medium, color = AccentPurple, fontSize = 16.sp)
+        }
+        Switch(
+            checked = isChecked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = AccentPurple,
+                uncheckedThumbColor = AccentPurple,
+                uncheckedTrackColor = LightPurple
+            )
+        )
     }
 }
