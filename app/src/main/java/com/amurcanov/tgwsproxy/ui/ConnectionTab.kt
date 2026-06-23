@@ -350,3 +350,10 @@ private fun ProxyStatusDivider() {
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
     )
 }
+fun openTelegram(context: Context, url: String) {
+    val intent = android.content.Intent(
+        android.content.Intent.ACTION_VIEW,
+        android.net.Uri.parse(url)
+    )
+    context.startActivity(intent)
+}
