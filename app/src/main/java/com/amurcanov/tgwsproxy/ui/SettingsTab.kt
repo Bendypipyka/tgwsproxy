@@ -2,6 +2,7 @@ package com.amurcanov.tgwsproxy.ui
 // build.gradle зависимость:
 // implementation("androidx.compose.material:material-icons-extended")
 
+import com.amurcanov.tgwsproxy.SettingsStore
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
