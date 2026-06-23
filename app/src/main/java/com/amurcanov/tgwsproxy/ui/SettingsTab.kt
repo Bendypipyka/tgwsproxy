@@ -1,4 +1,5 @@
- // build.gradle зависимость:
+package com.amurcanov.tgwsproxy.ui
+// build.gradle зависимость:
 // implementation("androidx.compose.material:material-icons-extended")
 
 import androidx.compose.animation.AnimatedVisibility
@@ -32,7 +33,7 @@ enum class RoutingMode { CLOUDFLARE_CDN, WORKER, NONE }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreenTemplate() {
+fun SettingsTab(settingsStore: SettingsStore) {
     var port by remember { mutableStateOf("1443") }
     var wsPool by remember { mutableStateOf(6) }
     var secretKey by remember { mutableStateOf("6b14cb003a34964c80c1af1f1157616") }
@@ -183,7 +184,7 @@ SettingSwitchRow(
     title = "Свой домен (Worker)",
     isChecked = routingMode == RoutingMode.WORKER,
     onCheckedChange = { if (it) routingMode = RoutingMode.WORKER else routingMode = RoutingMode.NONE }
-))
+)
 
                     // Поле домена появляется только при активном Worker
                     AnimatedVisibility(
