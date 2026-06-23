@@ -26,14 +26,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
 
-// Вспомогательная функция для генерации секретного ключа
 private fun generateRandomSecret(): String {
     val bytes = ByteArray(16)
     SecureRandom().nextBytes(bytes)
     return bytes.joinToString("") { "%02x".format(it) }
 }
 
-// Открытие Telegram по ссылке
 fun openTelegram(context: Context, url: String) {
     try {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -56,9 +54,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
     // Чтение сохранённых значений
     val savedIsDcAuto by settingsStore.isDcAuto.collectAsStateWithLifecycle(initialValue = true)
     val savedDc1 by settingsStore.dc1.collectAsStateWithLifecycle(initialValue = "")
-    val savedDc2 by settingsStore.dc2.collectAsStateWithLifecycle(initialValue = SettingsStore.DEFAULT_DIRECT_DC2_IP)
+    val savedDc2 by settingsStore.dc2.collectAsStateWithLifecycle(initialValue = "149.154.175.50")
     val savedDc3 by settingsStore.dc3.collectAsStateWithLifecycle(initialValue = "")
-    val savedDc4 by settingsStore.dc4.collectAsStateWithLifecycle(initialValue = SettingsStore.DEFAULT_DIRECT_DC4_IP)
+    val savedDc4 by settingsStore.dc4.collectAsStateWithLifecycle(initialValue = "149.154.167.91")
     val savedDc5 by settingsStore.dc5.collectAsStateWithLifecycle(initialValue = "")
     val savedDc203 by settingsStore.dc203.collectAsStateWithLifecycle(initialValue = "")
     val savedDc1m by settingsStore.dc1m.collectAsStateWithLifecycle(initialValue = "")
@@ -73,10 +71,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val savedCfEnabled by settingsStore.cfproxyEnabled.collectAsStateWithLifecycle(initialValue = true)
     val savedCustomDomainEnabled by settingsStore.customCfDomainEnabled.collectAsStateWithLifecycle(initialValue = false)
     val savedCustomDomain by settingsStore.customCfDomain.collectAsStateWithLifecycle(initialValue = "")
-    val autoStartOnBoot by settingsStore.autoStartOnBoot.collectAsStateWithLifecycle(initialValue = false)
+    val savedAutoStart by settingsStore.autoStartOnBoot.collectAsStateWithLifecycle(initialValue = false)
     val savedSecretKey by settingsStore.secretKey.collectAsStateWithLifecycle(initialValue = "LOADING")
 
-    // Если настройки ещё не загружены – показываем индикатор
     if (!isReady) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -84,7 +81,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
         return
     }
 
-    // Локальные состояния с автосохранением
+    // Локальные состояния
     var isDcAuto by rememberSaveable(savedIsDcAuto) { mutableStateOf(savedIsDcAuto) }
     var experimentalMode by rememberSaveable(isExperimental) { mutableStateOf(isExperimental) }
     var dc1Text by rememberSaveable(savedDc1) { mutableStateOf(savedDc1) }
@@ -105,9 +102,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
     var cfEnabled by rememberSaveable(savedCfEnabled) { mutableStateOf(savedCfEnabled) }
     var customCfDomainEnabled by rememberSaveable(savedCustomDomainEnabled) { mutableStateOf(savedCustomDomainEnabled) }
     var customCfDomain by rememberSaveable(savedCustomDomain) { mutableStateOf(savedCustomDomain) }
+    var autoStartOnBoot by rememberSaveable(savedAutoStart) { mutableStateOf(savedAutoStart) }
     var secretKeyText by remember(savedSecretKey) { mutableStateOf(if (savedSecretKey == "LOADING") "" else savedSecretKey) }
 
-    // Если секретный ключ пустой – генерируем новый
     LaunchedEffect(savedSecretKey) {
         if (savedSecretKey == "") {
             val generated = generateRandomSecret()
@@ -118,7 +115,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
         }
     }
 
-    // Отложенное сохранение всех настроек
     var saveJob by remember { mutableStateOf<Job?>(null) }
     fun scheduleSave() {
         saveJob?.cancel()
@@ -128,12 +124,12 @@ fun SettingsTab(settingsStore: SettingsStore) {
                 isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
                 dc1mText, dc2mText, dc3mText, dc4mText, dc5mText, dc203mText,
                 experimentalMode, bindIpText, portText, selectedPoolSize,
-                cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText
+                cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText,
+                autoStartOnBoot  // добавляем автозапуск
             )
         }
     }
 
-    // Диалог для ручной настройки IP-адресов DC (показывается по кнопке)
     var showIpSetupDialog by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
@@ -157,7 +153,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
         )
     }
 
-    // Основной UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -165,9 +160,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // === Блок: IP, Порт и Пул ===
+        // === IP и Порт ===
         Text("IP и Порт", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-        
+
         OutlinedTextField(
             value = bindIpText,
             onValueChange = { bindIpText = it; scheduleSave() },
@@ -177,7 +172,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
             enabled = !isRunning,
             singleLine = true
         )
-        
+
         OutlinedTextField(
             value = portText,
             onValueChange = { portText = it; scheduleSave() },
@@ -188,8 +183,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
-        
-        // Размер пула соединений
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -207,9 +201,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             Text(selectedPoolSize.toString(), style = MaterialTheme.typography.bodyMedium)
         }
 
-        HorizontalDivider()
+        Divider(modifier = Modifier.fillMaxWidth())
 
-        // === Блок: Автоопределение DC ===
+        // === Автоопределение DC ===
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -223,9 +217,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             )
         }
 
-        HorizontalDivider()
+        Divider(modifier = Modifier.fillMaxWidth())
 
-        // === Блок: CloudFlare CDN ===
+        // === CloudFlare CDN ===
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -239,9 +233,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             )
         }
 
-        HorizontalDivider()
+        Divider(modifier = Modifier.fillMaxWidth())
 
-        // === Блок: Свой домен (Worker) ===
+        // === Свой домен (Worker) ===
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -268,12 +262,12 @@ fun SettingsTab(settingsStore: SettingsStore) {
             )
         }
 
-        HorizontalDivider()
+        Divider(modifier = Modifier.fillMaxWidth())
 
-        // === Блок: Секретный ключ (просмотр) ===
+        // === Секретный ключ (только чтение) ===
         OutlinedTextField(
             value = secretKeyText,
-            onValueChange = { /* только для чтения */ },
+            onValueChange = {},
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Секретный ключ (только чтение)") },
             readOnly = true,
@@ -288,9 +282,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
             }
         )
 
-        HorizontalDivider()
+        Divider(modifier = Modifier.fillMaxWidth())
 
-        // === Блок: Автозапуск при загрузке ===
+        // === Автозапуск при загрузке ===
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -299,12 +293,12 @@ fun SettingsTab(settingsStore: SettingsStore) {
             Text("Автозапуск при загрузке", style = MaterialTheme.typography.titleSmall)
             Switch(
                 checked = autoStartOnBoot,
-                onCheckedChange = { settingsStore.saveAutoStartOnBoot(it) },
+                onCheckedChange = { autoStartOnBoot = it; scheduleSave() },
                 enabled = !isRunning
             )
         }
 
-        HorizontalDivider()
+        Divider(modifier = Modifier.fillMaxWidth())
 
         // === Кнопки управления ===
         Row(
@@ -314,41 +308,49 @@ fun SettingsTab(settingsStore: SettingsStore) {
             Button(
                 onClick = { showIpSetupDialog = true },
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors()
+                colors = ButtonDefaults.buttonColors()  // стандартные цвета
             ) {
                 Icon(Icons.Default.Settings, contentDescription = null)
-                Spacer(Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text("Настройка DC")
             }
-            
+
             Button(
                 onClick = {
-                    // Остановка сервиса (реализуется отдельно)
-                    ProxyService.stop(context)
+                    if (isRunning) {
+                        // Остановка сервиса
+                        context.stopService(Intent(context, ProxyService::class.java))
+                    } else {
+                        // Запуск сервиса (если нужен)
+                        context.startService(Intent(context, ProxyService::class.java))
+                    }
                 },
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
             ) {
-                Icon(Icons.Default.PowerSettingsNew, contentDescription = null)
-                Spacer(Modifier.width(4.dp))
+                Icon(
+                    if (isRunning) Icons.Default.PowerSettingsNew else Icons.Default.PlayArrow,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(if (isRunning) "Остановить" else "Запустить")
             }
         }
 
-        // Кнопка открытия Telegram (опционально)
         Button(
             onClick = { openTelegram(context, "tg://resolve?domain=telegram") },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.outlinedButtonColors()
         ) {
             Icon(Icons.Default.Public, contentDescription = null)
-            Spacer(Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             Text("Открыть Telegram")
         }
     }
 }
 
-// === Диалог для настройки IP-адресов DC ===
 @Composable
 private fun IpSetupDialog(
     isExperimental: Boolean,
@@ -382,8 +384,7 @@ private fun IpSetupDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text("Ручная настройка DC", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                
-                // Переключатель экспериментального режима (использование альтернативных IP)
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -392,10 +393,9 @@ private fun IpSetupDialog(
                     Text("Экспериментальный режим", style = MaterialTheme.typography.bodyMedium)
                     Switch(checked = isExperimental, onCheckedChange = onExperimentalChange)
                 }
-                
-                HorizontalDivider()
-                
-                // Поля для основных DC (1, 2, 3, 4, 5, 203)
+
+                Divider(modifier = Modifier.fillMaxWidth())
+
                 Text("Основные DC", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 DcInputRow("DC1", dc1Text, onDc1Change)
                 DcInputRow("DC2", dc2Text, onDc2Change)
@@ -403,19 +403,18 @@ private fun IpSetupDialog(
                 DcInputRow("DC4", dc4Text, onDc4Change)
                 DcInputRow("DC5", dc5Text, onDc5Change)
                 DcInputRow("DC203", dc203Text, onDc203Change)
-                
-                HorizontalDivider()
-                
-                // Поля для Media DC (1m, 2m, 3m, 4m, 5m, 203m)
-                Text("Media DC (альтернативные)", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                Divider(modifier = Modifier.fillMaxWidth())
+
+                Text("Media DC", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 DcInputRow("DC1m", dc1mText, onDc1mChange)
                 DcInputRow("DC2m", dc2mText, onDc2mChange)
                 DcInputRow("DC3m", dc3mText, onDc3mChange)
                 DcInputRow("DC4m", dc4mText, onDc4mChange)
                 DcInputRow("DC5m", dc5mText, onDc5mChange)
                 DcInputRow("DC203m", dc203mText, onDc203mChange)
-                
-                Spacer(Modifier.height(8.dp))
+
+                Spacer(modifier = Modifier.height(8.dp))
                 Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                     Text("Закрыть")
                 }
@@ -424,7 +423,6 @@ private fun IpSetupDialog(
     }
 }
 
-// Вспомогательный компонент для строки ввода IP DC
 @Composable
 private fun DcInputRow(label: String, value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
