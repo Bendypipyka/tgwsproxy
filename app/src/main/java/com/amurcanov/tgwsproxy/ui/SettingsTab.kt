@@ -402,14 +402,12 @@ fun SettingsTab(settingsStore: SettingsStore) {
                     checked = cfEnabled,
                     onCheckedChange = {
                         cfEnabled = it
-                        isDcAuto = it
                         scheduleSave()
                     },
                     enabled = !isRunning
                 )
             }
 
-            if (cfEnabled) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
                 Column(
@@ -447,7 +445,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
                         )
                     }
 
-                    if (customCfDomainEnabled) {
                         OutlinedTextField(
                             value = customCfDomain,
                             onValueChange = { newValue ->
