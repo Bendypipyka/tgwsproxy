@@ -363,3 +363,56 @@ private fun IpSetupDialog(
         }
     }
 }
+
+ HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("CloudFlare CDN", style = MaterialTheme.typography.titleSmall)
+            Switch(
+                checked = cfEnabled,
+                onCheckedChange = { 
+                    cfEnabled = it
+                    scheduleSave() 
+                },
+                enabled = !isRunning
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Свой домен (Worker)", style = MaterialTheme.typography.titleSmall)
+                Switch(
+                    checked = customCfDomainEnabled,
+                    onCheckedChange = { 
+                        customCfDomainEnabled = it
+                        scheduleSave() 
+                    },
+                    enabled = !isRunning
+                )
+            }
+            
+            OutlinedTextField(
+                value = customCfDomain,
+                onValueChange = { 
+                    customCfDomain = it.trim()
+                    scheduleSave() 
+                },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("my-worker.workers.dev") }
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
