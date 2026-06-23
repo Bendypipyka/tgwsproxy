@@ -468,7 +468,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
