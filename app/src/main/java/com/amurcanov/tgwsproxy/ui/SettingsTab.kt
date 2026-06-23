@@ -171,28 +171,23 @@ fun SettingsScreenTemplate() {
                     SectionHeader(icon = Icons.Default.Route, title = "Маршрутизация")
 
                     // CloudFlare CDN — при включении снимает Worker и наоборот
-                    SettingSwitchRow(
-                        icon = Icons.Default.Cloud,
-                        title = "CloudFlare CDN",
-                        isChecked = routingMode == RoutingMode.CLOUDFLARE_CDN,
-                        onCheckedChange = { enabled ->
-                            routingMode = if (enabled) RoutingMode.CLOUDFLARE_CDN else RoutingMode.NONE
-                        }
-                    )
+ SettingSwitchRow(
+     icon = Icons.Default.Cloud,
+     title = "CloudFlare CDN",
+     isChecked = isCfCdnEnabled,
+     onCheckedChange = { isCfCdnEnabled = it }
+)
 
-                    // Свой домен (Worker)
-                    SettingSwitchRow(
-                        icon = Icons.Default.Language,
-                        title = "Свой домен (Worker)",
-                        isChecked = routingMode == RoutingMode.WORKER,
-                        onCheckedChange = { enabled ->
-                            routingMode = if (enabled) RoutingMode.WORKER else RoutingMode.NONE
-                        }
-                    )
+SettingSwitchRow(
+    icon = Icons.Default.Language,
+    title = "Свой домен (Worker)",
+    isChecked = isWorkerEnabled,
+    onCheckedChange = { isWorkerEnabled = it }
+)
 
                     // Поле домена появляется только при активном Worker
                     AnimatedVisibility(
-                        visible = routingMode == RoutingMode.WORKER,
+                        visible = isWorkerEnabled,
                         enter = expandVertically(),
                         exit = shrinkVertically()
                     ) {
