@@ -187,7 +187,7 @@ SettingSwitchRow(
 
                     // Поле домена появляется только при активном Worker
                     AnimatedVisibility(
-                        visible = isWorkerEnabled,
+                        visible = routingMode == RoutingMode.WORKER,
                         enter = expandVertically(),
                         exit = shrinkVertically()
                     ) {
@@ -228,10 +228,10 @@ fun SectionHeader(icon: ImageVector, title: String) {
 
 @Composable
 fun SettingSwitchRow(
-    icon: ImageVector,
-    title: String,
-    isChecked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    icon = Icons.Default.Language,
+    title = "Свой домен (Worker)",
+    isChecked = routingMode == RoutingMode.WORKER,
+    onCheckedChange = { if (it) routingMode = RoutingMode.WORKER else routingMode = RoutingMode.NONE }
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
