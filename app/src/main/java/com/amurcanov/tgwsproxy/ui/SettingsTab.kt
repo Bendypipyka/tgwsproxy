@@ -171,9 +171,10 @@ fun SettingsTab(settingsStore: SettingsStore) {
             
         }
 
+// --- Блок CloudFlare и Custom Domain ---
+
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-        // CloudFlare
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -192,7 +193,6 @@ fun SettingsTab(settingsStore: SettingsStore) {
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-        // Custom Domain
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -225,164 +225,5 @@ fun SettingsTab(settingsStore: SettingsStore) {
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-        // TODO: Вставьте остальной код файла (автостарт, кнопка выхода и т.д.) сюда
-    }
-}
-
-// Восстановленный компонент (вероятно, использовался для выбора PoolSize)
-@Composable
-fun SelectableButton(
-    label: String,
-    selected: Boolean,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        shape = RoundedCornerShape(24.dp),
-        modifier = modifier.height(48.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-        )
-    ) {
-        Text(
-            label,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun IpSetupDialog(
-    isExperimental: Boolean,
-    onExperimentalChange: (Boolean) -> Unit,
-    dc1Text: String, onDc1Change: (String) -> Unit,
-    dc2Text: String, onDc2Change: (String) -> Unit,
-    dc3Text: String, onDc3Change: (String) -> Unit,
-    dc4Text: String, onDc4Change: (String) -> Unit,
-    dc5Text: String, onDc5Change: (String) -> Unit,
-    dc203Text: String, onDc203Change: (String) -> Unit,
-    dc1mText: String, onDc1mChange: (String) -> Unit,
-    dc2mText: String, onDc2mChange: (String) -> Unit,
-    dc3mText: String, onDc3mChange: (String) -> Unit,
-    dc4mText: String, onDc4mChange: (String) -> Unit,
-    dc5mText: String, onDc5mChange: (String) -> Unit,
-    dc203mText: String, onDc203mChange: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val onIpChange = { newValue: String, update: (String) -> Unit ->
-        update(newValue.filter { it.isDigit() || it == '.' })
-    }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp,
-            modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .wrapContentHeight()
-                .heightIn(max = 560.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    stringResource(com.amurcanov.tgwsproxy.R.string.dc_addresses),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                @Composable
-                fun dcInput(label: String, value: String, update: (String) -> Unit) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        OutlinedTextField(
-                            value = value,
-                            onValueChange = { onIpChange(it, update) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                            )
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (isExperimental) {
-                        dcInput("DC1", dc1Text, onDc1Change)
-                        dcInput("DC2", dc2Text, onDc2Change)
-                        dcInput("DC3", dc3Text, onDc3Change)
-                        dcInput("DC4", dc4Text, onDc4Change)
-                        dcInput("DC5", dc5Text, onDc5Change)
-                        dcInput("DC203", dc203Text, onDc203Change)
-
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                        Text(stringResource(com.amurcanov.tgwsproxy.R.string.media_dcs), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-
-                        dcInput("DC1m", dc1mText, onDc1mChange)
-                        dcInput("DC2m", dc2mText, onDc2mChange)
-                        dcInput("DC3m", dc3mText, onDc3mChange)
-                        dcInput("DC4m", dc4mText, onDc4mChange)
-                        dcInput("DC5m", dc5mText, onDc5mChange)
-                        dcInput("DC203m", dc203mText, onDc203mChange)
-                    } else {
-                        dcInput("DC2", dc2Text, onDc2Change)
-                        dcInput("DC4", dc4Text, onDc4Change)
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        stringResource(com.amurcanov.tgwsproxy.R.string.experimental_mode),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Switch(
-                        checked = isExperimental,
-                        onCheckedChange = onExperimentalChange
-                    )
-                }
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Text(stringResource(com.amurcanov.tgwsproxy.R.string.done), fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-    }
-}
+        
+        // --- Конец блока ---
