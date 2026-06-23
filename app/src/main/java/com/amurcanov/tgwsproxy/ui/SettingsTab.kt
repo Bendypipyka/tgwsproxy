@@ -1,35 +1,19 @@
-package com.amurcanov.tgwsproxy.ui
+[24.06.2026 0:35] ㅤ: package com.amurcanov.tgwsproxy.ui
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.amurcanov.tgwsproxy.ProxyService
 import com.amurcanov.tgwsproxy.SettingsStore
@@ -75,6 +59,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val savedDc4m by settingsStore.dc4m.collectAsStateWithLifecycle(initialValue = "")
     val savedDc5m by settingsStore.dc5m.collectAsStateWithLifecycle(initialValue = "")
     val savedDc203m by settingsStore.dc203m.collectAsStateWithLifecycle(initialValue = "")
+
     val savedPort by settingsStore.port.collectAsStateWithLifecycle(initialValue = "1443")
     val savedBindIp by settingsStore.bindIp.collectAsStateWithLifecycle(initialValue = "127.0.0.1")
     val savedPoolSize by settingsStore.poolSize.collectAsStateWithLifecycle(initialValue = 4)
@@ -90,8 +75,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
         }
         return
     }
-
-    var isDcAuto by rememberSaveable(savedIsDcAuto) { mutableStateOf(savedIsDcAuto) }
+[24.06.2026 0:35] ㅤ: var isDcAuto by rememberSaveable(savedIsDcAuto) { mutableStateOf(savedIsDcAuto) }
     var experimentalMode by rememberSaveable(isExperimental) { mutableStateOf(isExperimental) }
     var dc1Text by rememberSaveable(savedDc1) { mutableStateOf(savedDc1) }
     var dc2Text by rememberSaveable(savedDc2) { mutableStateOf(savedDc2) }
@@ -114,6 +98,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
     var secretKeyText by remember(savedSecretKey) { mutableStateOf(if (savedSecretKey == "LOADING") "" else savedSecretKey) }
 
     LaunchedEffect(savedSecretKey) {
+        // Исправлено: проверяем на реальную пустоту, только если данные уже загрузились
         if (savedSecretKey == "") {
             val generated = generateRandomSecret()
             secretKeyText = generated
@@ -129,7 +114,8 @@ fun SettingsTab(settingsStore: SettingsStore) {
         saveJob?.cancel()
         saveJob = scope.launch {
             delay(300)
-            settingsStore.saveAll(isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
+            settingsStore.saveAll(
+                isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
                 dc1mText, dc2mText, dc3mText, dc4mText, dc5mText, dc203mText,
                 experimentalMode, bindIpText, portText, selectedPoolSize,
                 cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText
@@ -141,21 +127,8 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val scrollState = rememberScrollState()
 
     if (showIpSetupDialog) {
-            IpSetupDialog(
-            isExperimental = experimentalMode,
-            onExperimentalChange = { experimentalMode = it; scheduleSave() },
-            dc1Text = dc1Text, onDc1Change = { dc1Text = it; scheduleSave() },
-            dc2Text = dc2Text, onDc2Change = { dc2Text = it; scheduleSave() },
-            dc3Text = dc3Text, onDc3Change = { dc3Text = it; scheduleSave() },
-            dc4Text = dc4Text, onDc4Change = { dc4Text = it; scheduleSave() },
-            dc5Text = dc5Text, onDc5Change = { dc5Text = it; scheduleSave() },
-            dc203Text = dc203Text, onDc203Change = { dc203Text = it; scheduleSave() },
-            dc1mText = dc1mText, onDc1mChange = { dc1mText = it; scheduleSave() },
-            dc2mText = dc2mText, onDc2mChange = { dc2mText = it; scheduleSave() },
-            dc3mText = dc3mText, onDc3mChange = { dc3mText = it; scheduleSave() },
-            dc4mText = dc4mText, onDc4mChange = { dc4mText = it; scheduleSave() },
-            dc5mText = dc5mText, onDc5mChange = { dc5mText = it; scheduleSave() },
-            dc203mText = dc203mText, onDc203mChange = { dc203mText = it; scheduleSave() },
+        // Передай сюда реальные параметры вместо заглушки, если они нужны в диалоге
+        IpSetupDialog(
             onDismiss = { showIpSetupDialog = false }
         )
     }
@@ -166,30 +139,44 @@ fun SettingsTab(settingsStore: SettingsStore) {
             .verticalScroll(scrollState)
             .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 12.dp)
     ) {
-        // --- Блок настроек ---
+        // --- Блок настроек IP и Порт ---
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // IP и Порт
             Text("IP и Порт", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
             
-            // ... (здесь остальной ваш существующий код для полей IP и Порта) ...
-            // Убедитесь, что вы не удалили этот кусок при замене файла!
+            // СЮДА ВСТАВЬ СВОИ ПОЛЯ ДЛЯ IP И ПОРТА
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-        // CloudFlare
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        // --- Блок CloudFlare ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+[24.06.2026 0:35] ㅤ: horizontalArrangement = Arrangement.SpaceBetween, 
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text("CloudFlare CDN", style = MaterialTheme.typography.titleSmall)
-            Switch(checked = cfEnabled, onCheckedChange = { cfEnabled = it; scheduleSave() }, enabled = !isRunning)
+            Switch(
+                checked = cfEnabled, 
+                onCheckedChange = { cfEnabled = it; scheduleSave() }, 
+                enabled = !isRunning
+            )
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-        // Custom Domain
+        // --- Блок Custom Domain ---
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(), 
+                horizontalArrangement = Arrangement.SpaceBetween, 
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text("Свой домен (Worker)", style = MaterialTheme.typography.titleSmall)
-                Switch(checked = customCfDomainEnabled, onCheckedChange = { customCfDomainEnabled = it; scheduleSave() }, enabled = !isRunning)
+                Switch(
+                    checked = customCfDomainEnabled, 
+                    onCheckedChange = { customCfDomainEnabled = it; scheduleSave() }, 
+                    enabled = !isRunning
+                )
             }
             OutlinedTextField(
                 value = customCfDomain,
@@ -201,67 +188,11 @@ fun SettingsTab(settingsStore: SettingsStore) {
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-        // ... (остальной код файла: автостарт, кнопка выхода и т.д.) ...
+        // СЮДА МОЖНО ДОБАВИТЬ ОСТАВШИЙСЯ КОД (Автостарт, кнопка выхода и т.д.)
     }
 }
 
 @Composable
-private fun IpSetupDialog(...) {
-    // ... (код диалога без изменений) ...
+private fun IpSetupDialog(onDismiss: () -> Unit) {
+    // Вставь сюда логику своего диалога
 }
-         // --- Блок CloudFlare и Custom Domain ---
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("CloudFlare CDN", style = MaterialTheme.typography.titleSmall)
-            Switch(
-                checked = cfEnabled,
-                onCheckedChange = { 
-                    cfEnabled = it
-                    scheduleSave() 
-                },
-                enabled = !isRunning
-            )
-        }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Свой домен (Worker)", style = MaterialTheme.typography.titleSmall)
-                Switch(
-                    checked = customCfDomainEnabled,
-                    onCheckedChange = { 
-                        customCfDomainEnabled = it
-                        scheduleSave() 
-                    },
-                    enabled = !isRunning
-                )
-            }
-            
-            OutlinedTextField(
-                value = customCfDomain,
-                onValueChange = { 
-                    customCfDomain = it.trim()
-                    scheduleSave() 
-                },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("my-worker.workers.dev") }
-            )
-        }
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-        
-        // --- Конец блока ---
