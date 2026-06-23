@@ -115,18 +115,35 @@ fun SettingsTab(settingsStore: SettingsStore) {
         }
     }
 
+    // Отложенное сохранение – теперь каждый параметр отдельно
     var saveJob by remember { mutableStateOf<Job?>(null) }
     fun scheduleSave() {
         saveJob?.cancel()
         saveJob = scope.launch {
             delay(300)
-            settingsStore.saveAll(
-                isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
-                dc1mText, dc2mText, dc3mText, dc4mText, dc5mText, dc203mText,
-                experimentalMode, bindIpText, portText, selectedPoolSize,
-                cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText,
-                autoStartOnBoot  // добавляем автозапуск
-            )
+            settingsStore.saveIsDcAuto(isDcAuto)
+            settingsStore.saveExperimentalMode(experimentalMode)
+            settingsStore.saveDc1(dc1Text)
+            settingsStore.saveDc2(dc2Text)
+            settingsStore.saveDc3(dc3Text)
+            settingsStore.saveDc4(dc4Text)
+            settingsStore.saveDc5(dc5Text)
+            settingsStore.saveDc203(dc203Text)
+            settingsStore.saveDc1m(dc1mText)
+            settingsStore.saveDc2m(dc2mText)
+            settingsStore.saveDc3m(dc3mText)
+            settingsStore.saveDc4m(dc4mText)
+            settingsStore.saveDc5m(dc5mText)
+            settingsStore.saveDc203m(dc203mText)
+            settingsStore.savePort(portText)
+            settingsStore.saveBindIp(bindIpText)
+            settingsStore.savePoolSize(selectedPoolSize)
+            settingsStore.saveCfEnabled(cfEnabled)
+            settingsStore.saveCustomDomainEnabled(customCfDomainEnabled)
+            settingsStore.saveCustomDomain(customCfDomain)
+            settingsStore.saveAutoStartOnBoot(autoStartOnBoot)
+            // secretKey сохраняется отдельно через кнопку, но если нужно – можно и здесь:
+            // settingsStore.saveSecretKey(secretKeyText)
         }
     }
 
@@ -308,7 +325,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
             Button(
                 onClick = { showIpSetupDialog = true },
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors()  // стандартные цвета
+                colors = ButtonDefaults.buttonColors()
             ) {
                 Icon(Icons.Default.Settings, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
@@ -318,10 +335,8 @@ fun SettingsTab(settingsStore: SettingsStore) {
             Button(
                 onClick = {
                     if (isRunning) {
-                        // Остановка сервиса
                         context.stopService(Intent(context, ProxyService::class.java))
                     } else {
-                        // Запуск сервиса (если нужен)
                         context.startService(Intent(context, ProxyService::class.java))
                     }
                 },
