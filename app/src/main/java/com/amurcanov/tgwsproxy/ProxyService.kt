@@ -85,7 +85,7 @@ class ProxyService : Service() {
             ACTION_START -> {
                 LogManager.clearLogs()
                 val bindIp = intent.getStringExtra(EXTRA_BIND_IP) ?: "127.0.0.1"
-                val port = intent.getIntExtra(EXTRA_PORT, 1443)
+                val port = intent.getIntExtra(EXTRA_PORT, 1080)
                 val ips = intent.getStringExtra(EXTRA_IPS) ?: ""
                 val poolSize = intent.getIntExtra(EXTRA_POOL_SIZE, 4)
                 val cfEnabled = intent.getBooleanExtra(EXTRA_CFPROXY_ENABLED, true)
