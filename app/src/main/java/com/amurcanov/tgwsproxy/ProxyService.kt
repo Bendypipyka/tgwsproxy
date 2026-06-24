@@ -34,7 +34,7 @@ class ProxyService : Service() {
 
     // Saved intent extras for restart on kill / onTaskRemoved
     private var lastBindIp: String = "127.0.0.1"
-    private var lastPort: Int = 1443
+    private var lastPort: Int = 1080
     private var lastIps: String = ""
     private var lastPoolSize: Int = 4
     private var lastCfEnabled: Boolean = true
