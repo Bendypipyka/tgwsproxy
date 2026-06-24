@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 // Constants & Configuration
 // ---------------------------------------------------------------------------
 
-pub const DEFAULT_PORT: u16 = 1443;
+pub const DEFAULT_PORT: u16 = 1080;
 pub const TCP_NODELAY: bool = true;
 pub const DEFAULT_RECV_BUF: usize = 256 * 1024;
 pub const DEFAULT_SEND_BUF: usize = 256 * 1024;
