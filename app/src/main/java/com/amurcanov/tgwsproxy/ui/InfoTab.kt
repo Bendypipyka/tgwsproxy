@@ -1103,7 +1103,7 @@ private fun buildSupportReport(
         appendLine(context.getString(R.string.report_settings))
         appendLine(context.getString(R.string.report_mode, mode))
         appendLine(context.getString(R.string.report_ws_pool, poolSize))
-        append(context.getString(R.string.report_port, port.trim().ifBlank { "1443" }))
+        append(context.getString(R.string.report_port, port.trim().ifBlank { "1080" }))
         append(cfDomainLine)
         appendLine()
         appendLine()
