@@ -91,7 +91,7 @@ fun ConnectionTab(settingsStore: SettingsStore) {
         }
     }
 
-    val port = savedPort.toIntOrNull() ?: 1443
+    val port = savedPort.toIntOrNull() ?: 1080
     val secretForUrl = remember(savedSecretKey) {
         val raw = savedSecretKey.trim()
         if (raw.isNotEmpty() && raw != "LOADING") raw else "00000000000000000000000000000000"
