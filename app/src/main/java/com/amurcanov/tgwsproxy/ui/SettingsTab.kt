@@ -35,7 +35,7 @@ enum class RoutingMode { CLOUDFLARE_CDN, WORKER, NONE }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsTab(settingsStore: SettingsStore) {
-    var port by remember { mutableStateOf("1443") }
+    var port by remember { mutableStateOf("1080") }
     var wsPool by remember { mutableStateOf(6) }
     var secretKey by remember { mutableStateOf("6b14cb003a34964c80c1af1f1157616") }
     var routingMode by remember { mutableStateOf(RoutingMode.CLOUDFLARE_CDN) }
